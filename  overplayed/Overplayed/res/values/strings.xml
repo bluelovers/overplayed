@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <string name="app_name">Overplayed</string>
+    <string name="address_hint">Server Address</string>
+    <string name="port_label">Port:</string>
+    <string name="port_default">30000</string>
+    <string name="button_label">Start</string>
+
+</resources>
