@@ -37,4 +37,4 @@ Source repository: https://github.com/elitak/PPJoy
 = Advanced =
    * To change what port the server uses, use the port number as an argument when running the server, i.e. overplayed 12345.
    * overplayed only uses UDP in case you want to port forward.
-   * x360ce (xbox 360 controller emulator) can be used for maximum game compatibility. A configuration file I made can be found here: https://code.google.com/p/overplayed/downloads/detail?name=x360ce.ini
+   * x360ce (xbox 360 controller emulator: https://code.google.com/p/x360ce/) can be used for maximum game compatibility. A configuration file I made can be found here: https://code.google.com/p/overplayed/downloads/detail?name=x360ce.ini
