@@ -25,10 +25,10 @@ PPJoy is a virtual joystick that the server uses to send game controller input t
 = Running overplayed =
   * The overplayed client for Android can be downloaded at Google Play: https://play.google.com/store/apps/details?id=com.gphrost.Overplayed
   * Enter the server's IP address or hostname and press *Start*
-  * To enter text or to touch behind a control in an app behind overplayed press the 'Hide' button. Press it again to bring the controls back.
+  * To enter text or to touch behind a control press the 'Hide' button. Press it again to bring the controls back.
   * To quit, hide the controls and press *Quit*.
 
 = Advanced =
    * To change what port the server uses, use the port number as an argument when running the server, i.e. overplayed 12345.
-   * overplayed only uses UDP in case you want to port forward.
+   * overplayed only uses UDP, in case you want to port forward.
    * x360ce (xbox 360 controller emulator: https://code.google.com/p/x360ce/) can be used for maximum game compatibility. A configuration file I made can be found here: https://code.google.com/p/overplayed/downloads/detail?name=x360ce.ini
