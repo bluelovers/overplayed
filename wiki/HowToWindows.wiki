@@ -11,7 +11,9 @@
 PPJoy is a virtual joystick that the server uses to send game controller input to games and applications. 
 
 Website: http://ppjoy.bossstation.dnsalias.org/ 
+
 Blog: http://ppjoy.blogspot.com/
+
 Source repository: https://github.com/elitak/PPJoy
 
   * PPJoy can be downloaded at:
