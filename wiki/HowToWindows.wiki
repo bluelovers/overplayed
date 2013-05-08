@@ -1,13 +1,10 @@
-#summary How to install overplayed.
+#summary How to install overplayed on Windows.
 
 = System Requirements =
 
-Windows 7 or 8, 32-bit or 64-bit has been tested, but should work on any version of Windows that PPjoy Supports
+*Windows 7* or *8*, *32-bit* or *64-bit* has been tested, but should work on any version of Windows that PPJoy Supports
 
-PPJoy installed with one virtual joystick created.
+*PPJoy installed* with *one virtual joystick created*.
 
 = PPJoy installation =
-
-  * Text in *bold* or _italic_
-  * Headings, paragraphs, and lists
-  * Automatic links to other wiki pages
+PPJoy is a virtual joystick interface that overplayed uses to send input commands to your game or application.
