@@ -25,7 +25,7 @@ PPJoy is a virtual joystick that the server uses to send game controller input t
 = Running overplayed =
   * The overplayed client for Android can be downloaded at Google Play: https://play.google.com/store/apps/details?id=com.gphrost.Overplayed
   * Enter the server's IP address or hostname and press *Start*
-  * To enter text or to touch behind a control press the 'Hide' button. Press it again to bring the controls back.
+  * To enter text or to touch behind a control press the *Hide* button. Press it again to bring the controls back.
   * To quit, hide the controls and press *Quit*.
 
 = Advanced =
