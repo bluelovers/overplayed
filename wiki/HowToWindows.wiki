@@ -2,9 +2,9 @@
 
 = System Requirements =
 
-*Windows 7* or *8*, *32-bit* or *64-bit* has been tested, but should work on any version of Windows that PPJoy Supports
+* *Windows 7* or *8*, *32-bit* or *64-bit* has been tested, but should work on any version of Windows that PPJoy Supports
 
-*PPJoy* installed with at least *one virtual joystick* created.
+* *PPJoy* installed with at least *one virtual joystick* created.
 
 = PPJoy installation =
 
