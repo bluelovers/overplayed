@@ -1,4 +1,4 @@
-#summary How to install overplayed in Windows.
+#summary How to use overplayed with Windows.
 
 = System Requirements =
 
