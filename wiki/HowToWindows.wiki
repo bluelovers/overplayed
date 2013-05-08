@@ -19,7 +19,7 @@ Source repository: https://github.com/elitak/PPJoy
   * PPJoy can be downloaded at:
       * *32-bit*: http://ppjoy.bossstation.dnsalias.org/
       * *64-bit*: https://code.google.com/p/overplayed/downloads/detail?name=ppjoysetup-0-8-4-6.exe
-          * *_Note 64-bit Windows Vista, 7, or 8, non-Ultimate only:_ Windows will be put in test mode upon installation.* It does not affect Windows except for a logo at the bottom right corner of the desktop. A helpful article explaining this can be found here: http://www.jim-melton.com/tag/ppjoy-windows-7-64-bit/ And the Microsoft knowledge base for reverting it can be found at: http://support.microsoft.com/kb/2509241
+          * *_Note 64-bit Windows Vista, 7, or 8, non-Ultimate only:_ Windows will be put in test mode upon installation.* It does not affect Windows except for a logo at the bottom right corner of the desktop. A helpful article explaining this can be found here: http://www.jim-melton.com/tag/ppjoy-windows-7-64-bit/ And the Microsoft knowledge base for reverting it can be found at: http://support.microsoft.com/kb/2509241 (but this will disable PPJoy)
 
   * After installation (only has to be done once):
       * Run *Configure Game Controllers*
