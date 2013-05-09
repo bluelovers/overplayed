@@ -22,6 +22,7 @@ PPJoy is a virtual joystick that the server uses to send game controller input t
       * Click *Add*
 = Running overplayed server =
   * Download and run the overplayed server: https://code.google.com/p/overplayed/downloads/detail?name=Overplayed.exe
+      * If you get *msvcp110.dll missing* error, install the Visual Studio C++ 2012 (x86) redistributable: http://www.microsoft.com/en-us/download/details.aspx?id=30679
 
 = Running overplayed =
   * The overplayed client for Android can be downloaded at Google Play: https://play.google.com/store/apps/details?id=com.gphrost.Overplayed
