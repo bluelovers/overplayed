@@ -30,6 +30,7 @@ import android.app.Activity;
 import android.content.ComponentName;
 import android.content.Intent;
 import android.content.ServiceConnection;
+import android.content.SharedPreferences;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.IBinder;
@@ -46,7 +47,7 @@ import android.widget.Toast;
  * @author Steven T. Ramzel
  */
 public class Overplayed extends Activity {
-	
+
 	/**
 	 * AsyncTask that checks the validity of a hostname
 	 * 
@@ -64,8 +65,10 @@ public class Overplayed extends Activity {
 		}
 
 	}
+
 	static MainService mService;
 	Intent i;
+	static final String HOST_HIST_PREFS_NAME = "HostHistory";
 
 	/** Defines callbacks for service binding, passed to bindService() */
 	private ServiceConnection mConnection = new ServiceConnection() {
@@ -84,14 +87,21 @@ public class Overplayed extends Activity {
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
-		
+
 		if (mService != null) {
-			//Hey! the program's already started!
+			// Hey! the program's already started!
 			finish();
 			return;
 		}
 		setContentView(R.layout.main);
-		
+
+		// Restore preferences
+		SharedPreferences settings = getSharedPreferences(HOST_HIST_PREFS_NAME,
+				0);
+		String lastHost = settings.getString("lastHost", "");
+		if (lastHost.length() > 0)
+			((EditText) findViewById(R.id.edit_message)).setText(lastHost);
+
 		final EditText editText = (EditText) findViewById(R.id.edit_port);
 		editText.setOnEditorActionListener(new OnEditorActionListener() {
 			public boolean onEditorAction(TextView v, int actionId,
@@ -107,6 +117,9 @@ public class Overplayed extends Activity {
 				return false;
 			}
 		});
+		String lastPort = settings.getString("lastPort", getResources()
+				.getString(R.string.port_default));
+		((EditText) findViewById(R.id.edit_port)).setText(lastPort);
 	}
 
 	public void startController(View view) throws InterruptedException,
@@ -114,16 +127,25 @@ public class Overplayed extends Activity {
 		i = new Intent(this, MainService.class);
 		i.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP
 				| Intent.FLAG_ACTIVITY_SINGLE_TOP);
-		
+
 		String portString = ((EditText) findViewById(R.id.edit_port)).getText()
 				.toString();
 		if (portString.length() > 0)
 			i.putExtra(MainService.EXTRA_PORT, Integer.parseInt(portString));
-		
-		String address = ((EditText) findViewById(R.id.edit_message)).getText()
-				.toString();
-		if (address.length() > 0 && new isNetGood().execute(address).get()) {
-			i.putExtra(MainService.EXTRA_ADDRESS, address);
+
+		String addressString = ((EditText) findViewById(R.id.edit_message))
+				.getText().toString();
+		if (addressString.length() > 0
+				&& new isNetGood().execute(addressString).get()) {
+			// We need an Editor object to make preference changes.
+			SharedPreferences settings = getSharedPreferences(
+					HOST_HIST_PREFS_NAME, 0);
+			SharedPreferences.Editor editor = settings.edit();
+			editor.putString("lastHost", addressString);
+			editor.putString("lastPort", portString);
+			// Commit the edits!
+			editor.commit();
+			i.putExtra(MainService.EXTRA_ADDRESS, addressString);
 			startService(i);
 			bindService(i, mConnection, BIND_AUTO_CREATE);
 		} else
