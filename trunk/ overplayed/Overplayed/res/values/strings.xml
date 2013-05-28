@@ -6,5 +6,6 @@
     <string name="port_label">Port:</string>
     <string name="port_default">30000</string>
     <string name="button_label">Start</string>
+    <string name="config">Configure External Gamepad</string>
 
 </resources>

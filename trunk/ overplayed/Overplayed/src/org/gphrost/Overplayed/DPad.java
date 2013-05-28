@@ -23,6 +23,8 @@ import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Paint;
+import android.graphics.PorterDuff;
+import android.graphics.PorterDuffXfermode;
 import android.graphics.Rect;
 import android.graphics.drawable.ShapeDrawable;
 import android.graphics.drawable.shapes.OvalShape;
@@ -42,6 +44,9 @@ public class DPad extends GameControllerView{
 		strokePaint.setStyle(Paint.Style.STROKE);
 		strokePaint.setFlags(Paint.ANTI_ALIAS_FLAG);
 		strokePaint.setStrokeWidth(4);
+
+		//Set paint to clear text from button
+		strokePaint.setXfermode(new PorterDuffXfermode(PorterDuff.Mode.CLEAR));
 	}
 	//Bitmap used for rendering d-pad
 	private Bitmap dpadBitmap;
@@ -73,9 +78,9 @@ public class DPad extends GameControllerView{
 		set(radiusScale, gravity, xOffset, yOffset);
 }
 	@Override
-	public void onDraw(Canvas canvas){
+	public void onDraw(Canvas canvas, float xOffset, float yOffset) {
 		//If down, draw opaque. Otherwise draw transparent.
-		canvas.drawBitmap(dpadBitmap, 0f, 0f, isDown ? downPaint : upPaint);
+		canvas.drawBitmap(dpadBitmap, xOffset, yOffset, isDown ? downPaint : upPaint);
 	}
 	
 	/**
@@ -89,7 +94,7 @@ public class DPad extends GameControllerView{
 		dpadShape.setBounds(new Rect(padding,padding,radius*2-padding,radius*2-padding));
 
 		//Create d-pad bitmap and render
-		dpadBitmap = Bitmap.createBitmap(radius*2, radius*2, Bitmap.Config.ARGB_8888);
+		dpadBitmap = Bitmap.createBitmap(radius*2, radius*2, Bitmap.Config.ARGB_4444);
 		Canvas dpadCanvas = new Canvas(dpadBitmap);
 		dpadShape.getPaint().set(fillPaint);
 		dpadShape.draw(dpadCanvas);
@@ -114,9 +119,9 @@ public class DPad extends GameControllerView{
 	public void updateStatus(float screenX, float screenY){
 		screenY -= radius + yOffset;
 		screenX -= radius + xOffset;
-		GameControllerView.buttons[upIndex] = screenY < -deadZone;
-		GameControllerView.buttons[downIndex] = screenY > deadZone;
-		GameControllerView.buttons[rightIndex] = screenX > deadZone;
-		GameControllerView.buttons[leftIndex] = screenX < -deadZone;
+		GameControllerView.buttons.set(upIndex, screenY < -deadZone);
+		GameControllerView.buttons.set(downIndex, screenY > deadZone);
+		GameControllerView.buttons.set(rightIndex, screenX > deadZone);
+		GameControllerView.buttons.set(leftIndex, screenX < -deadZone);
 	}
 }

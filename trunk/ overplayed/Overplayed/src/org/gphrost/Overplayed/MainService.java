@@ -48,7 +48,6 @@ public class MainService extends Service {
 	public static final String EXTRA_PORT = "EXTRA_PORT";
 	static Intent intent; // Intent used to call this service
 	static NetworkThread thread; // Thread for network routine to run on
-	private Button hideButton; // Button used to toggle visibilty of the
 	// Binder used to bind to main activity
 	private final IBinder mBinder = new LocalBinder();
 
@@ -88,44 +87,47 @@ public class MainService extends Service {
 		mView[1] = new Joystick(this, 3, (byte) 2, (byte) 3, Gravity.RIGHT
 				+ Gravity.BOTTOM, 0, 0);
 
-		mView[2] = new Button(this, 1f, (byte) 1, Gravity.RIGHT
+		mView[2] = new Button(this, 1f, (byte) 0, Gravity.RIGHT
 				+ Gravity.BOTTOM, 2f, 6f, "A");// A - Cross
-		mView[3] = new Button(this, 1f, (byte) 2, Gravity.RIGHT
+		mView[3] = new Button(this, 1f, (byte) 1, Gravity.RIGHT
 				+ Gravity.BOTTOM, 0f, 8f, "B");// B - Circle
-		mView[4] = new Button(this, 1f, (byte) 3, Gravity.RIGHT
+		mView[4] = new Button(this, 1f, (byte) 2, Gravity.RIGHT
 				+ Gravity.BOTTOM, 4f, 8f, "X");// X - Square
-		mView[5] = new Button(this, 1f, (byte) 4, Gravity.RIGHT
+		mView[5] = new Button(this, 1f, (byte) 3, Gravity.RIGHT
 				+ Gravity.BOTTOM, 2f, 10f, "Y");// Y - Triangle
 
-		mView[6] = new Button(this, 1f, (byte) 5,
+		mView[6] = new Button(this, 1f, (byte) 4,
 				Gravity.LEFT + Gravity.BOTTOM, 4f, 12f, "L1");// L1
 		mView[7] = new Button(this, 1f, (byte) 6,
 				Gravity.LEFT + Gravity.BOTTOM, 0f, 12f, "L2");// L2
-		mView[8] = new Button(this, 1f, (byte) 7, Gravity.RIGHT
+		mView[8] = new Button(this, 1f, (byte) 5, Gravity.RIGHT
 				+ Gravity.BOTTOM, 4f, 12f, "R1");// R1
-		mView[9] = new Button(this, 1f, (byte) 8, Gravity.RIGHT
+		mView[9] = new Button(this, 1f, (byte) 7, Gravity.RIGHT
 				+ Gravity.BOTTOM, 0f, 12f, "R2");// R2
 
-		mView[10] = new Button(this, 1f, (byte) 9, Gravity.LEFT
+		mView[10] = new Button(this, 1f, (byte) 10, Gravity.LEFT
 				+ Gravity.BOTTOM, 6f, 0f, "L3");// L3
-		mView[11] = new Button(this, 1f, (byte) 0, Gravity.RIGHT
+		mView[11] = new Button(this, 1f, (byte) 11, Gravity.RIGHT
 				+ Gravity.BOTTOM, 6f, 0f, "R3");// R3
 
-		mView[12] = new Button(this, 1f, (byte) 10, Gravity.CENTER
+		mView[12] = new Button(this, 1f, (byte) 9, Gravity.CENTER
 				| Gravity.BOTTOM, 1f, 0, ">");// Start
-		mView[13] = new Button(this, 1f, (byte) 11, Gravity.CENTER
+		mView[13] = new Button(this, 1f, (byte) 8, Gravity.CENTER
 				| Gravity.BOTTOM, -1f, 0, "<");// Select
 
-		mView[14] = new DPad(this, 3f, (byte) 15, (byte) 12, (byte) 13,
-				(byte) 14, Gravity.LEFT + Gravity.BOTTOM, 0f, 6f);// DPad
+		mView[14] = new DPad(this, 3f, (byte) 12, (byte) 13, (byte) 14,
+				(byte) 15, Gravity.LEFT + Gravity.BOTTOM, 0f, 6f);// DPad
 
 		GameControllerView.mView = mView;
 
 		GameControllerView.stopButton = new StopButton(this, 1f, (byte) -1,
-				Gravity.CENTER | Gravity.TOP, 0, 3, "QUIT");
+				Gravity.CENTER | Gravity.TOP, 0, 6, "QUIT");
 
-		hideButton = new DisableButton(this, 1f, (byte) -1, Gravity.CENTER
+		GameControllerView.hideButton = new DisableButton(this, 1f, (byte) -1, Gravity.CENTER
 				| Gravity.TOP, 0, 0, "HIDE");
+		
+		GameControllerView.alphaButton = new AlphaButton(this, 1f, (byte) -1, Gravity.CENTER
+				| Gravity.TOP, 0, 3, "ALPHA");
 	}
 
 	@Override
@@ -143,12 +145,14 @@ public class MainService extends Service {
 			GameControllerView.setInactive();
 
 		// Remove the last views and get out of Dodge
-		GameControllerView.wm.removeView(hideButton);
+		GameControllerView.wm.removeView(GameControllerView.hideButton);
+		GameControllerView.wm.removeView(GameControllerView.alphaButton);
 		GameControllerView.wm.removeView(GameControllerView.stopButton);
 		// This let's this service know it's not running
 		GameControllerView.wm = null;
 		// This tells UDPlay whether or not this service is running
 		Overplayed.mService = null;
+		
 		super.onDestroy();
 	}
 
@@ -174,7 +178,8 @@ public class MainService extends Service {
 			GameControllerView.wm = (WindowManager) getSystemService(WINDOW_SERVICE);
 			// Add the hideButton so when we activate the controller we don't
 			// get an exception
-			GameControllerView.wm.addView(hideButton, hideButton.params);
+			GameControllerView.wm.addView(GameControllerView.hideButton, GameControllerView.hideButton.params);
+			GameControllerView.wm.addView(GameControllerView.alphaButton, GameControllerView.alphaButton.params);
 			// Also add the stop button because, god forbid, we want to stop
 			// playing video games
 			GameControllerView.wm.addView(GameControllerView.stopButton,

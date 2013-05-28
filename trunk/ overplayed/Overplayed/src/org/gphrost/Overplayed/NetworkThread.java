@@ -15,7 +15,6 @@
  *	You should have received a copy of the GNU Lesser General Public License
  *	along with Overplayed.  If not, see <http://www.gnu.org/licenses/>.
  */
-
 package org.gphrost.Overplayed;
 
 import java.io.IOException;
@@ -40,7 +39,7 @@ public class NetworkThread extends Thread {
 	public boolean changed = true;
 	DatagramChannel channel = null;
 	InetSocketAddress destination;
-	private long lastSendTime;
+	private long nextSendTime;
 	// Counter for localSequence. Used to test ping rate
 	short localSequence;
 	// Used to store when transmission where made for comparison when they are
@@ -50,7 +49,7 @@ public class NetworkThread extends Thread {
 	byte[] protocol = new byte[4];
 	// Our send and receive buffers
 	ByteBuffer receiveBuffer = ByteBuffer.allocate(6);
-	int rtt = 1000; // Last ping
+	int rtt = 0; // Last ping
 	boolean running; // Status of the thread
 	ByteBuffer sendBuffer = ByteBuffer.allocate(17);
 	private long time;
@@ -79,31 +78,31 @@ public class NetworkThread extends Thread {
 		sendBuffer.put(protocol);
 		sendBuffer.putShort(localSequence);
 		// Put analog values
-		sendBuffer.putShort(GameControllerView.analog[0]);
-		sendBuffer.putShort(GameControllerView.analog[1]);
-		sendBuffer.putShort(GameControllerView.analog[2]);
-		sendBuffer.putShort(GameControllerView.analog[3]);
+		sendBuffer.putShort(GameControllerView.analog.get(0));
+		sendBuffer.putShort(GameControllerView.analog.get(1));
+		sendBuffer.putShort(GameControllerView.analog.get(2));
+		sendBuffer.putShort(GameControllerView.analog.get(3));
 
 		// Build first byte and put
 		byte firstByte = 0;
 		for (int n = 0; n < 7; n++, firstByte <<= 1)
-			if (GameControllerView.buttons[n])
+			if (GameControllerView.buttons.get(n))
 				firstByte |= 1;
-		if (GameControllerView.buttons[7])
+		if (GameControllerView.buttons.get(7))
 			firstByte |= 1;
 		sendBuffer.put(firstByte);
 
 		// Build second byte and put
 		byte secondByte = 0;
 		for (int n = 8; n < 15; n++, secondByte <<= 1)
-			if (GameControllerView.buttons[n])
+			if (GameControllerView.buttons.get(n))
 				secondByte |= 1;
-		if (GameControllerView.buttons[15])
+		if (GameControllerView.buttons.get(15))
 			secondByte |= 1;
 		sendBuffer.put(secondByte);
 
 		// Put the extra button (not implemented in touch yet)
-		sendBuffer.put((byte) (GameControllerView.buttons[16] ? 1 : 0));
+		sendBuffer.put((byte) (GameControllerView.buttons.get(16) ? 1 : 0));
 		sendBuffer.rewind();
 	}
 
@@ -121,28 +120,25 @@ public class NetworkThread extends Thread {
 
 			while (running) {
 				time = System.currentTimeMillis();
-
-				if (changed || time > lastSendTime) {
-					prepSendBuffer();
-					socket.send(sendPacket);
-					packetTimes[localSequence % 32] = time;
-					localSequence++;
-					changed = false;
-					lastSendTime = time + MAX_REFRESH_WAIT;
-				}
-
-				// Set time-out to the last ping
 				socket.setSoTimeout(Math.max(rtt, 1));
-				try {
-					// Retrieve the echoed sequence number
-					socket.receive(recieved_pkt);
-					buffer = ByteBuffer.wrap(recieved_pkt.getData());
-					buffer.getInt();
-					int testShort = unsingnedShortToInt(buffer.getShort());
-					rtt = (int) (time - packetTimes[testShort % 32]);
-					GameControllerView.refresh = rtt;
-				} catch (IOException e) {
-				}
+				prepSendBuffer();
+				socket.send(sendPacket);
+				packetTimes[localSequence % 32] = time;
+				localSequence++;
+				changed = false;
+				nextSendTime = time + MAX_REFRESH_WAIT;
+				while (running && !(changed || time > nextSendTime))
+					try {
+						// Retrieve the echoed sequence number
+						socket.receive(recieved_pkt);
+						buffer = ByteBuffer.wrap(recieved_pkt.getData());
+						buffer.getInt();
+						int testShort = unsingnedShortToInt(buffer.getShort());
+						rtt = (int) (time - packetTimes[testShort % 32]);
+						GameControllerView.refresh = (GameControllerView.refresh + rtt) / 2;
+						// Set time-out to the last ping
+					} catch (IOException e) {
+					}
 			}
 			// Killing thread/app
 			// Send a zero sequence, so if we connect again to the server it has
