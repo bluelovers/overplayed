@@ -23,17 +23,24 @@ import java.net.UnknownHostException;
 import java.util.concurrent.ExecutionException;
 
 import org.gphrost.Overplayed.MainService.LocalBinder;
+import org.json.JSONArray;
+import org.json.JSONException;
 
 import com.gphrost.Overplayed.R;
 
 import android.app.Activity;
 import android.content.ComponentName;
+import android.content.Context;
 import android.content.Intent;
 import android.content.ServiceConnection;
 import android.content.SharedPreferences;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.IBinder;
+import android.preference.PreferenceManager;
+import android.view.Menu;
+import android.view.MenuInflater;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.inputmethod.EditorInfo;
 import android.widget.EditText;
@@ -102,6 +109,14 @@ public class Overplayed extends Activity {
 		if (lastHost.length() > 0)
 			((EditText) findViewById(R.id.edit_message)).setText(lastHost);
 
+		String lastPort = settings.getString("lastPort", getResources()
+				.getString(R.string.port_default));
+		((EditText) findViewById(R.id.edit_port)).setText(lastPort);
+		GameControllerView.alpha = settings.getFloat("alpha", .5f);
+		getStringArrayPref(this, "boundButtons",
+				GameControllerView.boundButtons);
+		getStringArrayPref(this, "boundAxis", GameControllerView.boundAxis);
+
 		final EditText editText = (EditText) findViewById(R.id.edit_port);
 		editText.setOnEditorActionListener(new OnEditorActionListener() {
 			public boolean onEditorAction(TextView v, int actionId,
@@ -117,9 +132,6 @@ public class Overplayed extends Activity {
 				return false;
 			}
 		});
-		String lastPort = settings.getString("lastPort", getResources()
-				.getString(R.string.port_default));
-		((EditText) findViewById(R.id.edit_port)).setText(lastPort);
 	}
 
 	public void startController(View view) throws InterruptedException,
@@ -145,10 +157,64 @@ public class Overplayed extends Activity {
 			editor.putString("lastPort", portString);
 			// Commit the edits!
 			editor.commit();
+
+			// Start
 			i.putExtra(MainService.EXTRA_ADDRESS, addressString);
 			startService(i);
 			bindService(i, mConnection, BIND_AUTO_CREATE);
 		} else
 			Toast.makeText(this, "Invalid address", Toast.LENGTH_SHORT).show();
+	}
+
+	@Override
+	public boolean onCreateOptionsMenu(Menu menu) {
+		super.onCreateOptionsMenu(menu);
+		MenuInflater inflater = getMenuInflater();
+		inflater.inflate(R.menu.menu, menu);
+		return true;
+	}
+
+	@Override
+	public boolean onMenuItemSelected(int featureId, MenuItem item) {
+		if (item.getItemId() == R.id.config) {
+			Intent i = new Intent(this, JoystickConfig.class);
+			this.startActivity(i);
+			return true;
+		}
+		return false;
+	}
+
+	public static void setStringArrayPref(Context context, String key,
+			int[] values) {
+		SharedPreferences prefs = PreferenceManager
+				.getDefaultSharedPreferences(context);
+		SharedPreferences.Editor editor = prefs.edit();
+		JSONArray a = new JSONArray();
+		for (int i = 0; i < values.length; i++) {
+			a.put(values[i]);
+		}
+		if (values.length > 0)
+			editor.putString(key, a.toString());
+		else
+			editor.putString(key, null);
+		editor.commit();
+	}
+
+	public static void getStringArrayPref(Context context, String key,
+			int[] values) {
+		SharedPreferences prefs = PreferenceManager
+				.getDefaultSharedPreferences(context);
+		String json = prefs.getString(key, null);
+		if (json != null) {
+			try {
+				JSONArray a = new JSONArray(json);
+				for (int i = 0; i < a.length(); i++) {
+					int value = a.optInt(i, GameControllerView.boundButtons[i]);
+					values[i] = value;
+				}
+			} catch (JSONException e) {
+				e.printStackTrace();
+			}
+		}
 	}
 }

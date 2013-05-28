@@ -19,6 +19,7 @@ package org.gphrost.Overplayed;
 
 import android.annotation.SuppressLint;
 import android.content.Context;
+import android.content.Intent;
 import android.graphics.Canvas;
 import android.view.MotionEvent;
 import android.view.WindowManager;
@@ -29,7 +30,7 @@ import android.view.WindowManager;
  * @author Steven T. Ramzel
  */
 @SuppressLint("ViewConstructor")
-public class StopButton extends Button {
+public class AlphaButton extends Button {
 
 	/**
 	 * @param context
@@ -48,7 +49,7 @@ public class StopButton extends Button {
 	 * @param label
 	 *            Text on button face.
 	 */
-	public StopButton(Context context, float radiusScale, byte buttonIndex,
+	public AlphaButton(Context context, float radiusScale, byte buttonIndex,
 			int gravity, int xOffset, int yOffset, String label) {
 		super(context, radiusScale, buttonIndex, gravity, xOffset, yOffset,
 				label);
@@ -57,9 +58,12 @@ public class StopButton extends Button {
 	}
 
 	public boolean onTouchEvent(MotionEvent event) {
+
 		int action = event.getActionMasked();
 		if (action == MotionEvent.ACTION_DOWN) {
-			parentService.stopSelf();
+			Intent i = new Intent(this.getContext(), AlphaDialog.class);
+			i.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+			this.getContext().startActivity(i);
 		}
 		return true;
 	}

@@ -91,13 +91,13 @@ public class Joystick extends GameControllerView {
 
 		// Create joystick gate bitmap and render shape
 		gate = Bitmap.createBitmap(radius * 2, radius * 2,
-				Bitmap.Config.ARGB_8888);
+				Bitmap.Config.ARGB_4444);
 		Canvas gateCanvas = new Canvas(gate);
 		gateShape.getPaint().set(fillPaint);
 		gateShape.draw(gateCanvas);
 
 		// Create joystick handle bitmap and render shape
-		handle = Bitmap.createBitmap(radius, radius, Bitmap.Config.ARGB_8888);
+		handle = Bitmap.createBitmap(radius, radius, Bitmap.Config.ARGB_4444);
 		Canvas handleCanvas = new Canvas(handle);
 		handleShape.getPaint().set(fillPaint);
 		handleShape.draw(handleCanvas);
@@ -107,11 +107,11 @@ public class Joystick extends GameControllerView {
 	}
 
 	@Override
-	public void onDraw(Canvas canvas) {
+	public void onDraw(Canvas canvas, float xOffset, float yOffset) {
 		// Draw the joystick gate behind the handle
-		canvas.drawBitmap(gate, 0f, 0f, upPaint);
+		canvas.drawBitmap(gate, xOffset, yOffset, upPaint);
 		// If down, draw handle opaque. Otherwise draw transparent.
-		canvas.drawBitmap(handle, screenX + halfRadius, screenY + halfRadius,
+		canvas.drawBitmap(handle, screenX + halfRadius + xOffset, screenY + halfRadius + yOffset,
 				isDown ? downPaint : upPaint);
 	}
 
@@ -128,8 +128,8 @@ public class Joystick extends GameControllerView {
 		x -= radius + xOffset;
 		y -= radius + yOffset;
 		if (x == 0 && y == 0) {
-			GameControllerView.analog[joyXIndex] = Short.MAX_VALUE / 2;
-			GameControllerView.analog[joyYIndex] = Short.MAX_VALUE / 2;
+			GameControllerView.analog.set(joyXIndex, (short) (Short.MAX_VALUE / 2));
+			GameControllerView.analog.set(joyYIndex, (short) (Short.MAX_VALUE / 2));
 		} else {
 			// Distance between origin and touch coordinates
 			float length = (float) Math.sqrt(y * y + x * x);
@@ -151,8 +151,8 @@ public class Joystick extends GameControllerView {
 			float maxLength = (absY > absX) ? absSin : absCos;
 
 			// Update the network data, normalize to short value
-			GameControllerView.analog[joyXIndex] = (short) (((x / maxLength) + 1f) * .5f * Short.MAX_VALUE);
-			GameControllerView.analog[joyYIndex] = (short) (((y / maxLength) + 1f) * .5f * Short.MAX_VALUE);
+			GameControllerView.analog.set(joyXIndex, (short) (((x / maxLength) + 1f) * .5f * Short.MAX_VALUE));
+			GameControllerView.analog.set(joyYIndex, (short) (((y / maxLength) + 1f) * .5f * Short.MAX_VALUE));
 		}
 
 		// Update drawing info

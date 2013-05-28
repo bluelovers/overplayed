@@ -18,20 +18,30 @@
 
 package org.gphrost.Overplayed;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+
 import android.annotation.SuppressLint;
+import android.annotation.TargetApi;
 import android.content.Context;
 import android.content.res.Configuration;
 import android.content.res.Resources;
+import android.graphics.Canvas;
 import android.graphics.Paint;
 import android.graphics.PixelFormat;
 import android.graphics.Rect;
+import android.os.Build;
 import android.util.DisplayMetrics;
 import android.util.FloatMath;
+import android.util.Log;
 import android.view.Gravity;
 import android.view.HapticFeedbackConstants;
+import android.view.InputDevice;
 import android.view.KeyEvent;
 import android.view.MotionEvent;
 import android.view.View;
+import android.view.ViewManager;
 import android.view.WindowManager;
 import android.view.WindowManager.LayoutParams;
 
@@ -43,12 +53,39 @@ import android.view.WindowManager.LayoutParams;
 abstract class GameControllerView extends View {
 	// The visibility state of the game controller
 	protected static boolean active = true;
+
+	protected static List<Short> analog = Collections
+			.synchronizedList(new ArrayList<Short>(4));
+
 	// Analog values for the network packet
-	protected static short[] analog = new short[] { 16383, 16383, 16383, 16383 };
+	// protected static Vector<Short> analog = new Vector<Short>();
+	{
+		analog.add((short) 16383);
+		analog.add((short) 16383);
+		analog.add((short) 16383);
+		analog.add((short) 16383);
+	}
 	// Digital button values for the network packet
-	protected static boolean[] buttons = new boolean[] { false, false, false,
-			false, false, false, false, false, false, false, false, false,
-			false, false, false, false, false };
+	protected static List<Boolean> buttons = Collections
+			.synchronizedList(new ArrayList<Boolean>(16));
+	{
+		buttons.add(false);
+		buttons.add(false);
+		buttons.add(false);
+		buttons.add(false);
+		buttons.add(false);
+		buttons.add(false);
+		buttons.add(false);
+		buttons.add(false);
+		buttons.add(false);
+		buttons.add(false);
+		buttons.add(false);
+		buttons.add(false);
+		buttons.add(false);
+		buttons.add(false);
+		buttons.add(false);
+		buttons.add(false);
+	}
 	private static Rect display = new Rect(); // Used to hold display
 												// measurements
 	// Opaque paint for rendering button bitmaps
@@ -66,7 +103,13 @@ abstract class GameControllerView extends View {
 	static NetworkThread thread; // Handle for the thread
 	// Transparent paint for rendering button bitmaps
 	protected static final Paint upPaint = new Paint();
-	static WindowManager wm; // Handle for the WindowManager
+	static ViewManager wm; // Handle for the WindowManager
+	public static int[] boundAxis = { 0, 1, 11, 14 };
+	static AlphaButton alphaButton;
+	static DisableButton hideButton; // Button used to toggle visibilty of the
+	public static float alpha = .5f;
+	final static int[] boundButtons = { 96, 97, 99, 100, 102, 103, 104, 105,
+			109, 108, 106, 107, 19, 20, 21, 22 };
 
 	/**
 	 * Function of a circle
@@ -99,9 +142,8 @@ abstract class GameControllerView extends View {
 
 	/**
 	 * Make the controller visible by adding the control views to the
-	 * WindowManager. This does not check whether or not the views being
-	 * manipulated are already added to the WindowManager and thus might throw
-	 * an exception.
+	 * WindowManager. This does not check whether or not the views are already
+	 * added to the WindowManager and thus might throw an exception.
 	 */
 	public static void setActive() {
 		active = true;
@@ -111,17 +153,17 @@ abstract class GameControllerView extends View {
 			view.updateParams(view.radiusScale, view.xOffsetScale,
 					view.yOffsetScale);
 			view.generateBitmap((int) view.radius);
-			view.invalidate();
 			wm.addView(view, view.params);
 		}
+		updateAlpha(alpha);
 		wm.removeView(stopButton); // Hide the quit button
+		wm.removeView(alphaButton); // Hide the quit button
 	}
 
 	/**
 	 * Make the controller invisible by removing the control views from the
-	 * WindowManager. This does not check whether or not the views being
-	 * manipulated are already removed from the WindowManager and thus might
-	 * throw an exception.
+	 * WindowManager. This does not check whether or not the views are already
+	 * removed from the WindowManager and thus might throw an exception.
 	 */
 	public static void setInactive() {
 		active = false;
@@ -135,6 +177,12 @@ abstract class GameControllerView extends View {
 		stopButton.generateBitmap((int) stopButton.radius);
 		stopButton.invalidate();
 		wm.addView(stopButton, stopButton.params); // Show the quit button
+
+		alphaButton.updateParams(alphaButton.radiusScale,
+				alphaButton.xOffsetScale, alphaButton.yOffsetScale);
+		alphaButton.generateBitmap((int) alphaButton.radius);
+		alphaButton.invalidate();
+		wm.addView(alphaButton, alphaButton.params); // Show the quit button
 	}
 
 	/**
@@ -163,24 +211,26 @@ abstract class GameControllerView extends View {
 	private int pointerID = -1; // Current index of MotionEvent
 								// screen
 	protected float radius; // Radius of button in pixels
-	private float radiusScale; // Radius of button in multiples of
-								// standardRadius with respect to gravity
+	protected float radiusScale; // Radius of button in multiples of
+									// standardRadius with respect to gravity
 	private boolean secondary = false; // Flag whether or not this is a button
 
 	protected int xOffset; // X position of control with respect of entire
 
 	// standardRadius
-	private float xOffsetScale; // X position of control as multiples of
+	protected float xOffsetScale; // X position of control as multiples of
 
 	// screen
 	protected int yOffset; // Y position of control with respect of entire
 
 	// standardRadius with respect to gravity
-	private float yOffsetScale; // Y position of control as multiples of
+	protected float yOffsetScale; // Y position of control as multiples of
+	protected Paint halfPaint = new Paint();
 
 	{
 		downPaint.setARGB(255, 128, 128, 255);
 		upPaint.setARGB(128, 255, 255, 255);
+		halfPaint.setARGB(128, 255, 255, 255);
 		fillPaint.setARGB(255, 192, 192, 192);
 		fillPaint.setFlags(Paint.ANTI_ALIAS_FLAG);
 		fillPaint.setFlags(Paint.ANTI_ALIAS_FLAG);
@@ -233,92 +283,31 @@ abstract class GameControllerView extends View {
 	@Override
 	protected void onConfigurationChanged(Configuration newConfig) {
 		super.onConfigurationChanged(newConfig);
-		updateStandardRadius(getResources()); // standardRadius may need to be
-												// recalculated
-		updateParams(radiusScale, xOffsetScale, yOffsetScale); // Update layout
-																// params with
-																// new
-																// standardRadius
-		generateBitmap((int) radius); // Update rendering bitmap with new
-									// standardRadius
+		// standardRadius may need to be recalculated
+		updateStandardRadius(getResources());
+		// Update layout params with new standardRadius
+		updateParams(radiusScale, xOffsetScale, yOffsetScale);
+		// Update rendering bitmap with new standardRadius
+		generateBitmap((int) radius);
 		invalidate(); // Imediately redraw the control
-		wm.updateViewLayout(this, params); // Update the control layout
+		try {
+			wm.updateViewLayout(this, params); // Update the control layout
+		} catch (IllegalArgumentException e) {
+		}
 	}
 
 	@Override
-	public boolean onKeyDown(int keyCode, KeyEvent event) {
+	public boolean dispatchKeyEvent(KeyEvent event) {
+		int keyCode = event.getKeyCode();
 		// Keyboard buttons 1-9 are bound the to their respective button indices
-		if (event.isPrintingKey()) {
-			int num = Character.getNumericValue(event.getDisplayLabel());
-			if (0 <= num && num <= 9)
-				buttons[num] = true;
-			return true;
+		for (int i = 0; i < boundButtons.length; i++) {
+			if (keyCode == boundButtons[i]) {
+				buttons.set(i, event.getAction() == KeyEvent.ACTION_DOWN);
+				thread.changed = true;
+				return true;
+			}
 		}
-
-		// Handle DPAD
-		switch (keyCode) {
-		case KeyEvent.KEYCODE_DPAD_CENTER:
-			buttons[10] = true;
-			return true;
-		case KeyEvent.KEYCODE_ENTER:
-			buttons[11] = true;
-			return true;
-		case KeyEvent.KEYCODE_DPAD_DOWN:
-			buttons[12] = true;
-			return true;
-		case KeyEvent.KEYCODE_DPAD_LEFT:
-			buttons[13] = true;
-			return true;
-		case KeyEvent.KEYCODE_DPAD_RIGHT:
-			buttons[14] = true;
-			return true;
-		case KeyEvent.KEYCODE_DPAD_UP:
-			buttons[15] = true;
-			return true;
-		case KeyEvent.KEYCODE_SPACE:
-			buttons[16] = true;
-		default:
-			return super.onKeyDown(keyCode, event);
-		}
-
-	}
-
-	@Override
-	public boolean onKeyUp(int keyCode, KeyEvent event) {
-		// Keyboard buttons 1-9 are bound the to their respective button indices
-		if (event.isPrintingKey()) {
-			int num = Character.getNumericValue(event.getDisplayLabel());
-			if (0 <= num && num <= 9)
-				buttons[num] = false;
-			return true;
-		}
-
-		// Handle DPAD
-		switch (keyCode) {
-		case KeyEvent.KEYCODE_DPAD_CENTER:
-			buttons[10] = false;
-			return true;
-		case KeyEvent.KEYCODE_ENTER:
-			buttons[11] = false;
-			return true;
-		case KeyEvent.KEYCODE_DPAD_DOWN:
-			buttons[12] = false;
-			return true;
-		case KeyEvent.KEYCODE_DPAD_LEFT:
-			buttons[13] = false;
-			return true;
-		case KeyEvent.KEYCODE_DPAD_RIGHT:
-			buttons[14] = false;
-			return true;
-		case KeyEvent.KEYCODE_DPAD_UP:
-			buttons[15] = false;
-			return true;
-		case KeyEvent.KEYCODE_SPACE:
-			buttons[16] = false;
-			return true;
-		default:
-			return super.onKeyDown(keyCode, event);
-		}
+		return super.dispatchKeyEvent(event);
 	}
 
 	@Override
@@ -331,13 +320,11 @@ abstract class GameControllerView extends View {
 	@Override
 	public boolean onTouchEvent(MotionEvent event) {
 		int action = event.getActionMasked();
-
-		if (action == MotionEvent.ACTION_DOWN) {// An untouched control view is
-												// now touched
+		if (action == MotionEvent.ACTION_DOWN) {
+			// An untouched control view is now touched
 			// Check if it's within the controls radius (event.getX() and getY()
-			// is in respect to control view,
-			// so just subtract the radius so coordinates are in respect to axis
-			// origin
+			// is in respect to control view, so just subtract the radius so
+			// coordinates are in respect to axis origin
 			if (inRadius(radius, event.getX() - radius, event.getY() - radius)) {
 				// A little haptick feedback
 				performHapticFeedback(HapticFeedbackConstants.VIRTUAL_KEY);
@@ -347,10 +334,10 @@ abstract class GameControllerView extends View {
 				// Immediately invalidate
 				invalidate();
 			}
-		} else
-			// We don't know which control the touch has interacted with so
-			// check them all
+		} else {
 			for (GameControllerView view : mView) {
+				// We don't know which control the touch has interacted with so
+				// check them all
 				if (action < 4) {
 					// The action is either ACTION_MOVE or ACTION_UP
 					// These actions can be analyzed by using pointer IDs less
@@ -379,16 +366,20 @@ abstract class GameControllerView extends View {
 									// Update when reasonable
 									view.restrictedInvalidate();
 								}
-							} else if (getClass() == Button.class
-									&& view.getClass() == Button.class
-									&& !view.isDown && inBounds(view, event, p)) {
-								// This pointer has moved from the calling
-								// button-view to this button, so we can set
-								// this
-								// to down and flag it as a secondary press
-								down(event, view, pID, pID);
-								view.secondary = true;
-							}
+							} else
+								for (GameControllerView testView : mView)
+									if (testView.pointerID == pID
+											&& testView.getClass() == Button.class
+											&& view.getClass() == Button.class
+											&& !view.isDown
+											&& inBounds(view, event, p)) {
+										// This pointer has moved from the
+										// calling button-view to this button,
+										// so we can set this to down and flag
+										// it as a secondary press
+										down(event, view, p, pID);
+										view.secondary = true;
+									}
 						} else if (action == MotionEvent.ACTION_UP
 								&& view.pointerID == pID)
 							// The pointer attached to this control has been
@@ -406,7 +397,7 @@ abstract class GameControllerView extends View {
 					if (action == MotionEvent.ACTION_POINTER_DOWN
 							&& inBounds(view, event, p))
 						// An untouched control view is now touched
-						down(event, view, pID, pID);
+						down(event, view, p, pID);
 					else if (action == MotionEvent.ACTION_POINTER_UP
 							&& view.pointerID == pID)
 						// The pointer attached to this control has been lifted,
@@ -414,8 +405,19 @@ abstract class GameControllerView extends View {
 						up(view);
 				}
 			}
-
+		}
 		return true;
+	}
+
+	@TargetApi(Build.VERSION_CODES.HONEYCOMB_MR1)
+	@Override
+	public boolean dispatchGenericMotionEvent(MotionEvent event) {
+		try {
+			handleGameMotionEvent(event);
+			return true;
+		} catch (NoSuchMethodError e) {
+		}
+		return super.dispatchGenericMotionEvent(event);
 	}
 
 	/**
@@ -519,7 +521,7 @@ abstract class GameControllerView extends View {
 	 * @param yOffsetScale
 	 *            Y position for this button in terms of standardRadius.
 	 */
-	private void updateParams(float radiusScale, float xOffsetScale,
+	protected void updateParams(float radiusScale, float xOffsetScale,
 			float yOffsetScale) {
 		this.radius = radiusScale * standardRadius;
 		this.xOffsetScale = xOffsetScale;
@@ -540,4 +542,70 @@ abstract class GameControllerView extends View {
 	 *            Y coordinate of touch with respect to entire screen.
 	 */
 	abstract void updateStatus(float x, float y);
+
+	@TargetApi(Build.VERSION_CODES.HONEYCOMB_MR1)
+	public void handleGameMotionEvent(MotionEvent event) {
+		if (event.getDevice() != null) {
+			int historySize = event.getHistorySize();
+			for (int i = 0; i < historySize; i++) {
+				processJoystickInput(event.getDevice(), event, i);
+			}
+			processJoystickInput(event.getDevice(), event, -1);
+		}
+	}
+
+	@TargetApi(Build.VERSION_CODES.HONEYCOMB_MR1)
+	private void processJoystickInput(InputDevice device, MotionEvent event,
+			int historyPos) {
+
+		for (int i = 0; i < boundAxis.length; i++) {
+			InputDevice.MotionRange range = device.getMotionRange(boundAxis[i],
+					event.getSource());
+			if (range != null) {
+				float axisValue;
+				if (historyPos >= 0) {
+					axisValue = event.getHistoricalAxisValue(boundAxis[i],
+							historyPos);
+				} else {
+					axisValue = event.getAxisValue(boundAxis[i]);
+				}
+				analog.set(
+						i,
+						(short) ((processAxis(range, axisValue) + 1f) * .5f * Short.MAX_VALUE));
+			}
+		}
+		thread.changed = true;
+	}
+
+	@TargetApi(Build.VERSION_CODES.GINGERBREAD)
+	public static float processAxis(InputDevice.MotionRange range,
+			float axisvalue) {
+		float absaxisvalue = Math.abs(axisvalue);
+		float deadzone = range.getFlat();
+		if (absaxisvalue <= deadzone) {
+			return 0.0f;
+		}
+		float normalizedvalue;
+		if (axisvalue < 0.0f)
+			normalizedvalue = absaxisvalue / range.getMin();
+		else
+			normalizedvalue = absaxisvalue / range.getMax();
+		return normalizedvalue;
+	}
+
+	static void updateAlpha(float alpha) {
+		GameControllerView.alpha = alpha;
+		upPaint.setARGB((int) (255 * alpha), 255, 255, 255);
+		fillPaint.setARGB(255, 192, 192, 192);
+		for (GameControllerView view : mView)
+			view.invalidate();
+	}
+
+	public abstract void onDraw(Canvas canvas, float xOffset, float yOffset);
+
+	@SuppressLint("WrongCall")
+	@Override
+	public void onDraw(Canvas canvas) {
+		onDraw(canvas, 0f, 0f);
+	}
 }

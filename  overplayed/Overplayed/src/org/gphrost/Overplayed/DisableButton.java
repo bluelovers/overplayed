@@ -19,6 +19,7 @@ package org.gphrost.Overplayed;
 
 import android.annotation.SuppressLint;
 import android.content.Context;
+import android.graphics.Canvas;
 import android.view.MotionEvent;
 import android.view.WindowManager;
 
@@ -67,5 +68,9 @@ public class DisableButton extends Button {
 				setActive();
 		}
 		return true;
+	}
+	
+	public void onDraw(Canvas canvas) {
+		canvas.drawBitmap(buttonBitmap, 0f, 0f, halfPaint);
 	}
 }

@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="com.gphrost.Overplayed"
-    android:versionCode="1"
-    android:versionName="0.1b" >
+    android:versionCode="3"
+    android:versionName="0.3b" >
 
     <uses-sdk
         android:minSdkVersion="8"
@@ -16,7 +16,7 @@
         android:allowBackup="true"
         android:icon="@drawable/overplayed_logo"
         android:label="@string/app_name" >
-        <service android:name="org.gphrost.Overplayed.MainService" />
+        <service android:name="org.gphrost.Overplayed.MainService" android:stopWithTask="true"/>
 
         <activity
             android:name="org.gphrost.Overplayed.Overplayed"
@@ -24,7 +24,18 @@
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
+                <category android:name="android.intent.category.DEFAULT" />
             </intent-filter>
+        </activity>
+        <activity
+            android:name="org.gphrost.Overplayed.JoystickConfig"
+            android:label="@string/config"
+            android:finishOnTaskLaunch ="true">
+        </activity>
+        <activity
+            android:name="org.gphrost.Overplayed.AlphaDialog"
+            android:configChanges="orientation|keyboardHidden|screenSize"
+            android:theme="@style/Theme.Transparent">
         </activity>
     </application>
 

@@ -74,12 +74,15 @@ public class Button extends GameControllerView {
 		set(radiusScale, gravity, xOffset, yOffset);
 	}
 
-	@Override
-	public void onDraw(Canvas canvas) {
-		// If down, draw opaque. Otherwise draw transparent.
-		canvas.drawBitmap(buttonBitmap, 0f, 0f, isDown ? downPaint : upPaint);
-	}
 
+
+
+	@Override
+	public void onDraw(Canvas canvas, float xOffset, float yOffset) {
+
+		// If down, draw opaque. Otherwise draw transparent.
+		canvas.drawBitmap(buttonBitmap, xOffset, yOffset, isDown ? downPaint : upPaint);
+	}
 	/**
 	 * Buttons dont need to be updated while being pressed. This does nothing
 	 * for buttons.
@@ -102,7 +105,7 @@ public class Button extends GameControllerView {
 
 		//Create button bitmap and render shape
 		buttonBitmap = Bitmap.createBitmap(radius * 2, radius * 2,
-				Bitmap.Config.ARGB_8888);
+				Bitmap.Config.ARGB_4444);
 		Canvas handleCanvas = new Canvas(buttonBitmap);
 		buttonShape.getPaint().set(fillPaint);
 		buttonShape.draw(handleCanvas);
@@ -136,6 +139,6 @@ public class Button extends GameControllerView {
 	 */
 	@Override
 	public void updateStatus(float screenX, float screenY) {
-		GameControllerView.buttons[buttonIndex] = isDown;
+		GameControllerView.buttons.set(buttonIndex, isDown);
 	}
 }
