@@ -20,7 +20,8 @@ package org.gphrost.Overplayed;
 
 import java.net.InetAddress;
 import java.net.UnknownHostException;
-import java.util.concurrent.ExecutionException;
+import java.util.ArrayList;
+import java.util.Collection;
 
 import org.gphrost.Overplayed.MainService.LocalBinder;
 import org.json.JSONArray;
@@ -60,7 +61,7 @@ public class Overplayed extends Activity {
 	 * 
 	 * @author Steven T. Ramzel
 	 */
-	private class isNetGood extends AsyncTask<String, Integer, Boolean> {
+	private class HostStringChecker extends AsyncTask<String, Integer, Boolean> {
 		@Override
 		protected Boolean doInBackground(String... address) {
 			try {
@@ -74,9 +75,23 @@ public class Overplayed extends Activity {
 	}
 
 	static MainService mService;
-	Intent i;
 	static final String HOST_HIST_PREFS_NAME = "HostHistory";
+	static SharedPreferences settings;
+	static SharedPreferences.Editor editor;
 
+	public static ArrayList<Integer> boundAxis = new ArrayList<Integer>();
+	{
+		boundAxis.add(0);
+		boundAxis.add(1);
+		boundAxis.add(11);
+		boundAxis.add(14);
+	}
+	final static ArrayList<Integer> boundButtons = new ArrayList<Integer>();
+	{
+		int[] defButtons = { 96, 97, 99, 100, 102, 103, 104, 105, 109, 108, 106, 107, 19, 20, 21, 22 };
+		for (int i:defButtons) boundButtons.add(i);
+	}
+	
 	/** Defines callbacks for service binding, passed to bindService() */
 	private ServiceConnection mConnection = new ServiceConnection() {
 
@@ -91,10 +106,14 @@ public class Overplayed extends Activity {
 		}
 	};
 
+	protected void onPause() {
+		super.onPause();
+		editor.commit();
+	}
+
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
-
 		if (mService != null) {
 			// Hey! the program's already started!
 			finish();
@@ -103,8 +122,8 @@ public class Overplayed extends Activity {
 		setContentView(R.layout.main);
 
 		// Restore preferences
-		SharedPreferences settings = getSharedPreferences(HOST_HIST_PREFS_NAME,
-				0);
+		settings = getSharedPreferences(HOST_HIST_PREFS_NAME, 0);
+		editor = settings.edit();
 		String lastHost = settings.getString("lastHost", "");
 		if (lastHost.length() > 0)
 			((EditText) findViewById(R.id.edit_message)).setText(lastHost);
@@ -113,9 +132,8 @@ public class Overplayed extends Activity {
 				.getString(R.string.port_default));
 		((EditText) findViewById(R.id.edit_port)).setText(lastPort);
 		GameControllerView.alpha = settings.getFloat("alpha", .5f);
-		getStringArrayPref(this, "boundButtons",
-				GameControllerView.boundButtons);
-		getStringArrayPref(this, "boundAxis", GameControllerView.boundAxis);
+		getStringArrayPref("boundButtons",boundButtons);
+		getStringArrayPref("boundAxis", boundAxis);
 
 		final EditText editText = (EditText) findViewById(R.id.edit_port);
 		editText.setOnEditorActionListener(new OnEditorActionListener() {
@@ -134,9 +152,9 @@ public class Overplayed extends Activity {
 		});
 	}
 
-	public void startController(View view) throws InterruptedException,
-			ExecutionException {
-		i = new Intent(this, MainService.class);
+	public void startController(View view) {
+
+		Intent i = new Intent(this, MainService.class);
 		i.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP
 				| Intent.FLAG_ACTIVITY_SINGLE_TOP);
 
@@ -147,23 +165,22 @@ public class Overplayed extends Activity {
 
 		String addressString = ((EditText) findViewById(R.id.edit_message))
 				.getText().toString();
-		if (addressString.length() > 0
-				&& new isNetGood().execute(addressString).get()) {
-			// We need an Editor object to make preference changes.
-			SharedPreferences settings = getSharedPreferences(
-					HOST_HIST_PREFS_NAME, 0);
-			SharedPreferences.Editor editor = settings.edit();
-			editor.putString("lastHost", addressString);
-			editor.putString("lastPort", portString);
-			// Commit the edits!
-			editor.commit();
+		try {
+			if (addressString.length() > 0
+					&& new HostStringChecker().execute(addressString).get()) {
 
-			// Start
-			i.putExtra(MainService.EXTRA_ADDRESS, addressString);
-			startService(i);
-			bindService(i, mConnection, BIND_AUTO_CREATE);
-		} else
-			Toast.makeText(this, "Invalid address", Toast.LENGTH_SHORT).show();
+				editor.putString("lastHost", addressString);
+				editor.putString("lastPort", portString);
+				// Start
+				i.putExtra(MainService.EXTRA_ADDRESS, addressString);
+				startService(i);
+				bindService(i, mConnection, BIND_AUTO_CREATE);
+			} else
+				Toast.makeText(this, "Invalid address", Toast.LENGTH_SHORT)
+						.show();
+		} catch (Exception e) {
+
+		}
 	}
 
 	@Override
@@ -185,34 +202,26 @@ public class Overplayed extends Activity {
 	}
 
 	public static void setStringArrayPref(Context context, String key,
-			int[] values) {
-		SharedPreferences prefs = PreferenceManager
-				.getDefaultSharedPreferences(context);
-		SharedPreferences.Editor editor = prefs.edit();
-		JSONArray a = new JSONArray();
-		for (int i = 0; i < values.length; i++) {
-			a.put(values[i]);
-		}
-		if (values.length > 0)
+			ArrayList values) {
+		JSONArray a = new JSONArray(values);
+		if (values.size() > 0)
 			editor.putString(key, a.toString());
 		else
 			editor.putString(key, null);
 		editor.commit();
 	}
 
-	public static void getStringArrayPref(Context context, String key,
-			int[] values) {
-		SharedPreferences prefs = PreferenceManager
-				.getDefaultSharedPreferences(context);
-		String json = prefs.getString(key, null);
+	public static void getStringArrayPref(String key,
+			ArrayList<Integer> values) {
+		String json = settings.getString(key, null);
 		if (json != null) {
 			try {
 				JSONArray a = new JSONArray(json);
 				for (int i = 0; i < a.length(); i++) {
-					int value = a.optInt(i, GameControllerView.boundButtons[i]);
-					values[i] = value;
+					int value = a.optInt(i, values.get(i));
+					values.set(i,value);
 				}
-			} catch (JSONException e) {
+			} catch (Exception e) {
 				e.printStackTrace();
 			}
 		}

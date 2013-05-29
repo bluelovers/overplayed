@@ -5,25 +5,17 @@ import com.gphrost.Overplayed.R;
 import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.app.AlertDialog;
-import android.content.Context;
 import android.content.DialogInterface;
 import android.content.SharedPreferences;
 import android.content.DialogInterface.OnCancelListener;
 import android.content.Intent;
-import android.content.res.Configuration;
 import android.graphics.Canvas;
-import android.graphics.PixelFormat;
 import android.graphics.Rect;
 import android.os.Bundle;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.Window;
-import android.view.WindowManager;
 import android.view.ViewGroup.LayoutParams;
-import android.view.ViewManager;
-import android.widget.AbsoluteLayout;
-import android.widget.FrameLayout;
 
 public class AlphaDialog extends Activity implements OnCancelListener {
 	static View drawview;
@@ -79,15 +71,10 @@ public class AlphaDialog extends Activity implements OnCancelListener {
 							new DialogInterface.OnClickListener() {
 								public void onClick(DialogInterface dialog,
 										int id2) {
-									SharedPreferences settings = AlphaDialog.this
-											.getApplication()
-											.getSharedPreferences(Overplayed.HOST_HIST_PREFS_NAME, 0);
-									SharedPreferences.Editor editor = settings
-											.edit();
-									editor.putFloat("alpha",
+									Overplayed.editor.putFloat("alpha",
 											GameControllerView.alpha);
 									// Commit the edits!
-									editor.commit();
+									Overplayed.editor.commit();
 									AlphaDialog.this.finish();
 								}
 							}).setOnCancelListener(this);
@@ -106,8 +93,7 @@ public class AlphaDialog extends Activity implements OnCancelListener {
 	}
 
 	public void onCancel(DialogInterface arg0) {
-		SharedPreferences settings = getSharedPreferences(Overplayed.HOST_HIST_PREFS_NAME,0);
-		GameControllerView.alpha = settings.getFloat("alpha", .5f);
+		GameControllerView.alpha = Overplayed.settings.getFloat("alpha", .5f);
 		GameControllerView.updateAlpha(GameControllerView.alpha);
 		AlphaDialog.drawview.invalidate();
 		finish();

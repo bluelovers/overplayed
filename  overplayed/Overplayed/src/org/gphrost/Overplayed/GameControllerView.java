@@ -19,6 +19,7 @@
 package org.gphrost.Overplayed;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
@@ -34,7 +35,6 @@ import android.graphics.Rect;
 import android.os.Build;
 import android.util.DisplayMetrics;
 import android.util.FloatMath;
-import android.util.Log;
 import android.view.Gravity;
 import android.view.HapticFeedbackConstants;
 import android.view.InputDevice;
@@ -66,8 +66,7 @@ abstract class GameControllerView extends View {
 		analog.add((short) 16383);
 	}
 	// Digital button values for the network packet
-	protected static List<Boolean> buttons = Collections
-			.synchronizedList(new ArrayList<Boolean>(16));
+	protected static List<Boolean> buttons = Collections.synchronizedList(new ArrayList<Boolean>(16));
 	{
 		buttons.add(false);
 		buttons.add(false);
@@ -104,12 +103,9 @@ abstract class GameControllerView extends View {
 	// Transparent paint for rendering button bitmaps
 	protected static final Paint upPaint = new Paint();
 	static ViewManager wm; // Handle for the WindowManager
-	public static int[] boundAxis = { 0, 1, 11, 14 };
 	static AlphaButton alphaButton;
 	static DisableButton hideButton; // Button used to toggle visibilty of the
 	public static float alpha = .5f;
-	final static int[] boundButtons = { 96, 97, 99, 100, 102, 103, 104, 105,
-			109, 108, 106, 107, 19, 20, 21, 22 };
 
 	/**
 	 * Function of a circle
@@ -300,8 +296,8 @@ abstract class GameControllerView extends View {
 	public boolean dispatchKeyEvent(KeyEvent event) {
 		int keyCode = event.getKeyCode();
 		// Keyboard buttons 1-9 are bound the to their respective button indices
-		for (int i = 0; i < boundButtons.length; i++) {
-			if (keyCode == boundButtons[i]) {
+		for (int i = 0; i < Overplayed.boundButtons.size(); i++) {
+			if (keyCode == Overplayed.boundButtons.get(i)) {
 				buttons.set(i, event.getAction() == KeyEvent.ACTION_DOWN);
 				thread.changed = true;
 				return true;
@@ -558,16 +554,16 @@ abstract class GameControllerView extends View {
 	private void processJoystickInput(InputDevice device, MotionEvent event,
 			int historyPos) {
 
-		for (int i = 0; i < boundAxis.length; i++) {
-			InputDevice.MotionRange range = device.getMotionRange(boundAxis[i],
+		for (int i = 0; i < Overplayed.boundAxis.size(); i++) {
+			InputDevice.MotionRange range = device.getMotionRange(Overplayed.boundAxis.get(i),
 					event.getSource());
 			if (range != null) {
 				float axisValue;
 				if (historyPos >= 0) {
-					axisValue = event.getHistoricalAxisValue(boundAxis[i],
+					axisValue = event.getHistoricalAxisValue(Overplayed.boundAxis.get(i),
 							historyPos);
 				} else {
-					axisValue = event.getAxisValue(boundAxis[i]);
+					axisValue = event.getAxisValue(Overplayed.boundAxis.get(i));
 				}
 				analog.set(
 						i,

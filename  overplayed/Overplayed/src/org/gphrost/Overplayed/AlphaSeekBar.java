@@ -4,7 +4,6 @@ package org.gphrost.Overplayed;
 import android.content.Context;
 import android.content.res.Configuration;
 import android.util.AttributeSet;
-import android.util.Log;
 import android.widget.SeekBar;
 
 public class AlphaSeekBar extends android.widget.SeekBar {
