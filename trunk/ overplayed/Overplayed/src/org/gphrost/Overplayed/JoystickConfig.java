@@ -40,15 +40,19 @@ public class JoystickConfig extends Activity {
 		for (int i = 0; i < controlStrings.length; i++) {
 			item = new HashMap<String, String>();
 			item.put("line1", controlStrings[i]);
-			item.put("line2", keyStrings[GameControllerView.boundButtons[i]]);
+			item.put("line2", keyStrings[Overplayed.boundButtons.get(i)]);
 			list.add(item);
 		}
 		for (int i = 0; i < axisStrings.length; i++) {
 			item = new HashMap<String, String>();
 			item.put("line1", axisStrings[i]);
-			item.put("line2",
-					MotionEvent.axisToString(GameControllerView.boundAxis[i]));
-			list.add(item);
+			try {
+				item.put("line2",
+						MotionEvent.axisToString(Overplayed.boundAxis.get(i)));
+				list.add(item);
+			} catch (NoSuchMethodError e) {
+
+			}
 		}
 		sa = new SimpleAdapter(this, list, android.R.layout.two_line_list_item,
 				new String[] { "line1", "line2" }, new int[] {
@@ -138,27 +142,26 @@ public class JoystickConfig extends Activity {
 	};
 
 	void changeKey(int id, int arg1) {
-		GameControllerView.boundButtons[(int) id] = arg1;
+		Overplayed.boundButtons.set(id, arg1);
 		list.get((int) id).put("line2",
-				keyStrings[GameControllerView.boundButtons[(int) id]]);
+				keyStrings[Overplayed.boundButtons.get(id)]);
 		list.set((int) id, list.get((int) id));
 		sa.notifyDataSetChanged();
 		Overplayed.setStringArrayPref(this, "boundButtons",
-				GameControllerView.boundButtons);
+				Overplayed.boundButtons);
 	}
 
 	@TargetApi(Build.VERSION_CODES.HONEYCOMB_MR1)
 	void changeAxis(int id, int arg1) {
-		GameControllerView.boundAxis[(int) id
-				- JoystickConfig.controlStrings.length] = arg1;
+		Overplayed.boundAxis.set((int) id
+				- JoystickConfig.controlStrings.length, arg1);
 		list.get((int) id).put(
 				"line2",
-				MotionEvent.axisToString(GameControllerView.boundAxis[id
-						- JoystickConfig.controlStrings.length]));
+				MotionEvent.axisToString(Overplayed.boundAxis.get(id
+						- JoystickConfig.controlStrings.length)));
 		list.set((int) id, list.get((int) id));
 		sa.notifyDataSetChanged();
-		Overplayed.setStringArrayPref(this, "boundAxis",
-				GameControllerView.boundAxis);
+		Overplayed.setStringArrayPref(this, "boundAxis", Overplayed.boundAxis);
 	}
 
 	final static String[] keyStrings = { "", "SOFT LEFT", "SOFT RIGHT", "HOME",
@@ -203,8 +206,8 @@ public class JoystickConfig extends Activity {
 			"KATAKANA HIRAGANA", "YEN", "RO", "KANA" };
 	final static String[] controlStrings = { "BUTTON A", "BUTTON B",
 			"BUTTON X", "BUTTON Y", "BUTTON L1", "BUTTON R1", "BUTTON L2",
-			"BUTTON R2", "Select", "Start", "BUTTON L3", "BUTTON R3", "DPAD UP", "DPAD DOWN",
-			"DPAD LEFT", "DPAD RIGHT" };
+			"BUTTON R2", "Select", "Start", "BUTTON L3", "BUTTON R3",
+			"DPAD UP", "DPAD DOWN", "DPAD LEFT", "DPAD RIGHT" };
 	final static String[] axisStrings = { "Right Analog X", "Right Analog Y",
 			"Left Analog X", "Left Analog Y" };
 }
