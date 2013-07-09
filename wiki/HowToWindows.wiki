@@ -12,7 +12,7 @@ PPJoy is a virtual joystick that the server uses to send game controller input t
 
   * PPJoy can be downloaded at:
       * *32-bit*: http://ppjoy.bossstation.dnsalias.org/
-      * *64-bit*: https://code.google.com/p/overplayed/downloads/detail?name=ppjoysetup-0-8-4-6.exe
+      * *64-bit*: https://code.google.com/p/steel-batallion-64/downloads/detail?name=ppjoysetup-0-8-4-6.exe
           * *_Note 64-bit Windows Vista, 7, or 8 only (except Ultimate):_ Windows will be put in test mode upon installation.*
               * It does not affect Windows except for a logo at the bottom right corner of the desktop. A helpful article explaining this can be found here: http://www.jim-melton.com/tag/ppjoy-windows-7-64-bit/ And the Microsoft knowledge base for reverting it can be found at: http://support.microsoft.com/kb/2509241 (but this will disable PPJoy)
 
@@ -30,7 +30,7 @@ PPJoy is a virtual joystick that the server uses to send game controller input t
   * The overplayed client for Android can be downloaded at Google Play: https://play.google.com/store/apps/details?id=com.gphrost.Overplayed
   * Enter the server's IP address or hostname and press *Start*
   * To enter text or to touch behind a control press the *Hide* button. Press it again to bring the controls back.
-  * To quit, hide the controls and press *Quit*.
+  * Press *Menu* for options and to quit.
 
 = Advanced =
    * To change what port the server uses, use the port number as an argument when running the server, i.e. overplayed 12345.
