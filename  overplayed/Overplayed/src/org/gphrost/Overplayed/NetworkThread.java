@@ -25,6 +25,9 @@ import java.net.SocketException;
 import java.nio.ByteBuffer;
 import java.nio.channels.DatagramChannel;
 
+import org.gphrost.Overplayed.Controller.Controller;
+import org.gphrost.Overplayed.Controller.ControlView;
+
 /**
  * Thread controlling network interaction
  * 
@@ -54,6 +57,8 @@ public class NetworkThread extends Thread {
 	ByteBuffer sendBuffer = ByteBuffer.allocate(17);
 	private long time;
 
+	private Controller controller;
+
 	{
 		// Arbitrary protocol identifier attached to all network packets
 		final int PROTOCOL_ID = 0x99887766;
@@ -63,10 +68,11 @@ public class NetworkThread extends Thread {
 		protocol[3] = (byte) ((PROTOCOL_ID >> 0) & 0xFF);
 	}
 
-	NetworkThread(String address, int port) {
+	NetworkThread(String address, int port, Controller controller) {
 		super();
 		this.address = address;
 		this.port = port;
+		this.controller = controller;
 	}
 
 	/**
@@ -78,31 +84,31 @@ public class NetworkThread extends Thread {
 		sendBuffer.put(protocol);
 		sendBuffer.putShort(localSequence);
 		// Put analog values
-		sendBuffer.putShort(GameControllerView.analog.get(0));
-		sendBuffer.putShort(GameControllerView.analog.get(1));
-		sendBuffer.putShort(GameControllerView.analog.get(2));
-		sendBuffer.putShort(GameControllerView.analog.get(3));
+		sendBuffer.putShort(controller.analogState.get(0));
+		sendBuffer.putShort(controller.analogState.get(1));
+		sendBuffer.putShort(controller.analogState.get(2));
+		sendBuffer.putShort(controller.analogState.get(3));
 
 		// Build first byte and put
 		byte firstByte = 0;
 		for (int n = 0; n < 7; n++, firstByte <<= 1)
-			if (GameControllerView.buttons.get(n))
+			if (controller.buttonState.get(n))
 				firstByte |= 1;
-		if (GameControllerView.buttons.get(7))
+		if (controller.buttonState.get(7))
 			firstByte |= 1;
 		sendBuffer.put(firstByte);
 
 		// Build second byte and put
 		byte secondByte = 0;
 		for (int n = 8; n < 15; n++, secondByte <<= 1)
-			if (GameControllerView.buttons.get(n))
+			if (controller.buttonState.get(n))
 				secondByte |= 1;
-		if (GameControllerView.buttons.get(15))
+		if (controller.buttonState.get(15))
 			secondByte |= 1;
 		sendBuffer.put(secondByte);
 
 		// Put the extra button (not implemented in touch yet)
-		sendBuffer.put((byte) (GameControllerView.buttons.get(16) ? 1 : 0));
+		//sendBuffer.put((byte) (controller.buttons.get(16) ? 1 : 0));
 		sendBuffer.rewind();
 	}
 
@@ -135,7 +141,7 @@ public class NetworkThread extends Thread {
 						buffer.getInt();
 						int testShort = unsingnedShortToInt(buffer.getShort());
 						rtt = (int) (time - packetTimes[testShort % 32]);
-						GameControllerView.refresh = (GameControllerView.refresh + rtt) / 2;
+						ControlView.refresh = (ControlView.refresh + rtt) / 2;
 						// Set time-out to the last ping
 					} catch (IOException e) {
 					}

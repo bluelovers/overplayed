@@ -18,16 +18,28 @@
 
 package org.gphrost.Overplayed;
 
+import java.io.File;
+
+import org.gphrost.Overplayed.Controller.Controller;
+import org.gphrost.Overplayed.Menu.MenuActivity;
+import org.gphrost.Overplayed.Menu.MenuButtonLinearLayout;
+
 import com.gphrost.Overplayed.R;
 
 import android.app.Notification;
 import android.app.PendingIntent;
 import android.app.Service;
+import android.content.Context;
 import android.content.Intent;
+import android.graphics.PixelFormat;
 import android.os.Binder;
 import android.os.IBinder;
 import android.view.Gravity;
+import android.view.LayoutInflater;
+import android.view.View;
+import android.view.View.OnClickListener;
 import android.view.WindowManager;
+import android.view.WindowManager.LayoutParams;
 
 /**
  * Service used to manage GameControllerViews and the NetworkThread.
@@ -35,14 +47,8 @@ import android.view.WindowManager;
  * @author Steven T. Ramzel
  */
 public class MainService extends Service {
-	public class LocalBinder extends Binder {
-		MainService getService() {
-			// Return this instance of LocalService so clients can call public
-			// methods
-			return MainService.this;
-		}
-	}
-
+	public static MainService staticThis;
+	public static Controller controller;
 	static final String EXTRA_ADDRESS = "EXTRA_ADDRESS";
 	// GameControllerViews
 	public static final String EXTRA_PORT = "EXTRA_PORT";
@@ -50,7 +56,10 @@ public class MainService extends Service {
 	static NetworkThread thread; // Thread for network routine to run on
 	// Binder used to bind to main activity
 	private final IBinder mBinder = new LocalBinder();
+	public static MenuButtonLinearLayout menuButton;
+	public static LayoutParams menuParams;
 
+	@SuppressWarnings("deprecation")
 	@Override
 	public IBinder onBind(Intent intent) {
 		MainService.intent = intent;
@@ -59,7 +68,9 @@ public class MainService extends Service {
 		Notification note = new Notification(R.drawable.overplayed_logo,
 				"Overplayed is running ...", System.currentTimeMillis());
 
-		PendingIntent pi = PendingIntent.getService(this, 0, intent, 0);
+		Intent i = new Intent(this,Overplayed.class);
+		i.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+		PendingIntent pi = PendingIntent.getActivity(this, 0, i, 0);//.getService(this, 0, intent, 0);
 
 		note.setLatestEventInfo(this, "Overplayed", "Overplayed is running", pi);
 
@@ -68,66 +79,15 @@ public class MainService extends Service {
 
 		// Start the service in the foreground so it stays until manually closed
 		startForeground(1, note);
-
 		return mBinder;
 	}
 
 	@Override
 	public void onCreate() {
 		super.onCreate();
-
-		// Create all the controls
-		GameControllerView mView[] = new GameControllerView[15];
-		GameControllerView.parentService = this;
-		GameControllerView.updateStandardRadius(getResources());
-
-		mView[0] = new Joystick(this, 3, (byte) 0, (byte) 1, Gravity.LEFT
-				+ Gravity.BOTTOM, 0, 0);
-
-		mView[1] = new Joystick(this, 3, (byte) 2, (byte) 3, Gravity.RIGHT
-				+ Gravity.BOTTOM, 0, 0);
-
-		mView[2] = new Button(this, 1f, (byte) 0, Gravity.RIGHT
-				+ Gravity.BOTTOM, 2f, 6f, "A");// A - Cross
-		mView[3] = new Button(this, 1f, (byte) 1, Gravity.RIGHT
-				+ Gravity.BOTTOM, 0f, 8f, "B");// B - Circle
-		mView[4] = new Button(this, 1f, (byte) 2, Gravity.RIGHT
-				+ Gravity.BOTTOM, 4f, 8f, "X");// X - Square
-		mView[5] = new Button(this, 1f, (byte) 3, Gravity.RIGHT
-				+ Gravity.BOTTOM, 2f, 10f, "Y");// Y - Triangle
-
-		mView[6] = new Button(this, 1f, (byte) 4,
-				Gravity.LEFT + Gravity.BOTTOM, 4f, 12f, "L1");// L1
-		mView[7] = new Button(this, 1f, (byte) 6,
-				Gravity.LEFT + Gravity.BOTTOM, 0f, 12f, "L2");// L2
-		mView[8] = new Button(this, 1f, (byte) 5, Gravity.RIGHT
-				+ Gravity.BOTTOM, 4f, 12f, "R1");// R1
-		mView[9] = new Button(this, 1f, (byte) 7, Gravity.RIGHT
-				+ Gravity.BOTTOM, 0f, 12f, "R2");// R2
-
-		mView[10] = new Button(this, 1f, (byte) 10, Gravity.LEFT
-				+ Gravity.BOTTOM, 6f, 0f, "L3");// L3
-		mView[11] = new Button(this, 1f, (byte) 11, Gravity.RIGHT
-				+ Gravity.BOTTOM, 6f, 0f, "R3");// R3
-
-		mView[12] = new Button(this, 1f, (byte) 9, Gravity.CENTER
-				| Gravity.BOTTOM, 1f, 0, ">");// Start
-		mView[13] = new Button(this, 1f, (byte) 8, Gravity.CENTER
-				| Gravity.BOTTOM, -1f, 0, "<");// Select
-
-		mView[14] = new DPad(this, 3f, (byte) 12, (byte) 13, (byte) 14,
-				(byte) 15, Gravity.LEFT + Gravity.BOTTOM, 0f, 6f);// DPad
-
-		GameControllerView.mView = mView;
-
-		GameControllerView.stopButton = new StopButton(this, 1f, (byte) -1,
-				Gravity.CENTER | Gravity.TOP, 0, 6, "QUIT");
-
-		GameControllerView.hideButton = new DisableButton(this, 1f, (byte) -1, Gravity.CENTER
-				| Gravity.TOP, 0, 0, "HIDE");
-		
-		GameControllerView.alphaButton = new AlphaButton(this, 1f, (byte) -1, Gravity.CENTER
-				| Gravity.TOP, 0, 3, "ALPHA");
+		staticThis = this;
+		File file = new File(MainService.staticThis.getExternalFilesDir(null), Preferences.Load.defaultController(this) + ".xml");
+		controller = new Controller(this, file);
 	}
 
 	@Override
@@ -140,19 +100,13 @@ public class MainService extends Service {
 		} catch (InterruptedException e) {
 			throw new RuntimeException(e);
 		}
-
-		if (GameControllerView.active)
-			GameControllerView.setInactive();
-
-		// Remove the last views and get out of Dodge
-		GameControllerView.wm.removeView(GameControllerView.hideButton);
-		GameControllerView.wm.removeView(GameControllerView.alphaButton);
-		GameControllerView.wm.removeView(GameControllerView.stopButton);
-		// This let's this service know it's not running
-		GameControllerView.wm = null;
+		//controller.wm.removeView(menuButton);
+		controller.detach();
+		controller.wm = null;
+		controller = null;
+		menuButton = null;
 		// This tells UDPlay whether or not this service is running
 		Overplayed.mService = null;
-		
 		super.onDestroy();
 	}
 
@@ -164,30 +118,76 @@ public class MainService extends Service {
 
 		// If the thread isn't running, RUN IT!!!
 		if (thread == null) {
-			thread = new NetworkThread(address, port);
+			thread = new NetworkThread(address, port, controller);
 			thread.running = true;
 			thread.start();
 			// Let the GameControllerViews know about it so they can interact
 			// with it
-			GameControllerView.thread = thread;
+			controller.thread = thread;
 		}
 
 		// This means the service was not already running, otherwise don't touch
 		// anything
-		if (GameControllerView.wm == null) {
-			GameControllerView.wm = (WindowManager) getSystemService(WINDOW_SERVICE);
-			// Add the hideButton so when we activate the controller we don't
-			// get an exception
-			GameControllerView.wm.addView(GameControllerView.hideButton, GameControllerView.hideButton.params);
-			GameControllerView.wm.addView(GameControllerView.alphaButton, GameControllerView.alphaButton.params);
-			// Also add the stop button because, god forbid, we want to stop
-			// playing video games
-			GameControllerView.wm.addView(GameControllerView.stopButton,
-					GameControllerView.stopButton.params);
-			GameControllerView.setActive();
-		}
+		if (controller.wm == null) {
+			controller.attach((WindowManager) getSystemService(WINDOW_SERVICE),
+					this);
+			LayoutInflater inflater = (LayoutInflater) getSystemService(Context.LAYOUT_INFLATER_SERVICE);
+			menuParams = new WindowManager.LayoutParams(
+					android.view.ViewGroup.LayoutParams.WRAP_CONTENT,
+					android.view.ViewGroup.LayoutParams.WRAP_CONTENT,
+					// Go on top of everything, I would do TYPE_SYSTEM_ALERT but
+					// it
+					// messes with the notification bar.
+					WindowManager.LayoutParams.TYPE_SYSTEM_ERROR,
+					// Let touch events pass to other apps
+					WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL,
+					// Let the background of controls be transparent
+					PixelFormat.TRANSLUCENT);
+			menuParams.gravity = Gravity.TOP;
 
+			menuButton = ((MenuButtonLinearLayout) inflater.inflate(
+					R.layout.hidebutton, null));
+			menuParams.alpha = .5f;
+			menuParams.flags = WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL | WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE;
+
+			menuButton.findViewById(R.id.button1).setOnClickListener(
+					new OnClickListener() {
+						public void onClick(View arg0) {
+							// TODO Auto-generated method stub
+							if (controller.active) {
+								controller.setInactive();
+								menuButton.active = false;
+								controller.wm.updateViewLayout(menuButton,
+										menuParams);
+							} else {
+								controller.setActive(MainService.this);
+								menuButton.active = true;
+								controller.wm.updateViewLayout(menuButton,
+										menuParams);
+							}
+						}
+					});
+			menuButton.findViewById(R.id.button2).setOnClickListener(
+					new OnClickListener() {
+						public void onClick(View arg0) {
+							Intent i = new Intent(MainService.this,
+									MenuActivity.class);
+							i.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+							startActivity(i);
+							controller.wm.removeView(MainService.menuButton);
+							controller.detach();
+						}
+					});
+			((WindowManager) getSystemService(WINDOW_SERVICE)).addView(menuButton, menuParams);
+		}
 		return Service.START_NOT_STICKY;// When we press quit, the service
 										// should die
+	}
+
+	public class LocalBinder extends Binder {
+	    MainService getService() {
+	        return MainService.this;
+	    }
+
 	}
 }
