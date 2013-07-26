@@ -1,26 +1,28 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="com.gphrost.Overplayed"
-    android:versionCode="4"
-    android:versionName="0.3.1b" >
+    android:versionCode="6"
+    android:versionName="0.5.1b" >
 
     <uses-sdk
         android:minSdkVersion="8"
-        android:targetSdkVersion="17" >
+        android:targetSdkVersion="10" >
     </uses-sdk>
 
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
 
     <application
         android:allowBackup="true"
         android:icon="@drawable/overplayed_logo"
         android:label="@string/app_name" >
-        <service android:name="org.gphrost.Overplayed.MainService" android:stopWithTask="true"/>
+        <service android:name="org.gphrost.Overplayed.MainService"/>
 
         <activity
             android:name="org.gphrost.Overplayed.Overplayed"
-            android:label="@string/app_name">
+            android:label="@string/app_name"
+            android:theme="@style/Theme.DeviceDefault">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
@@ -28,14 +30,14 @@
             </intent-filter>
         </activity>
         <activity
-            android:name="org.gphrost.Overplayed.JoystickConfig"
+            android:name="org.gphrost.Overplayed.KeyConfig"
             android:label="@string/config"
             android:finishOnTaskLaunch ="true">
         </activity>
         <activity
-            android:name="org.gphrost.Overplayed.AlphaDialog"
-            android:configChanges="orientation|keyboardHidden|screenSize"
-            android:theme="@style/Theme.Transparent">
+            android:name="org.gphrost.Overplayed.Menu.MenuActivity"
+            android:theme="@style/Theme.Transparent"
+            android:configChanges="orientation|keyboardHidden">
         </activity>
     </application>
 

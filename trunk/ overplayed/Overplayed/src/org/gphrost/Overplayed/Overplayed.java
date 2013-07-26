@@ -20,25 +20,18 @@ package org.gphrost.Overplayed;
 
 import java.net.InetAddress;
 import java.net.UnknownHostException;
-import java.util.ArrayList;
-import java.util.Collection;
 
 import org.gphrost.Overplayed.MainService.LocalBinder;
-import org.json.JSONArray;
-import org.json.JSONException;
 
 import com.gphrost.Overplayed.R;
 
 import android.app.Activity;
 import android.content.ComponentName;
-import android.content.Context;
 import android.content.Intent;
 import android.content.ServiceConnection;
-import android.content.SharedPreferences;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.IBinder;
-import android.preference.PreferenceManager;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
@@ -55,7 +48,6 @@ import android.widget.Toast;
  * @author Steven T. Ramzel
  */
 public class Overplayed extends Activity {
-
 	/**
 	 * AsyncTask that checks the validity of a hostname
 	 * 
@@ -75,26 +67,13 @@ public class Overplayed extends Activity {
 	}
 
 	static MainService mService;
-	static final String HOST_HIST_PREFS_NAME = "HostHistory";
-	static SharedPreferences settings;
-	static SharedPreferences.Editor editor;
 
-	public static ArrayList<Integer> boundAxis = new ArrayList<Integer>();
-	{
-		boundAxis.add(0);
-		boundAxis.add(1);
-		boundAxis.add(11);
-		boundAxis.add(14);
-	}
-	final static ArrayList<Integer> boundButtons = new ArrayList<Integer>();
-	{
-		int[] defButtons = { 96, 97, 99, 100, 102, 103, 104, 105, 109, 108, 106, 107, 19, 20, 21, 22 };
-		for (int i:defButtons) boundButtons.add(i);
-	}
-	
+	public static Integer[] boundAxis = {0,1,11,14};
+	public final static Integer[] boundButtons = { 96, 97, 99, 100, 102, 103, 104,
+			105, 109, 108, 106, 107, 19, 20, 21, 22 };
+
 	/** Defines callbacks for service binding, passed to bindService() */
 	private ServiceConnection mConnection = new ServiceConnection() {
-
 		public void onServiceConnected(ComponentName className, IBinder service) {
 			LocalBinder binder = (LocalBinder) service;
 			mService = binder.getService();
@@ -108,7 +87,6 @@ public class Overplayed extends Activity {
 
 	protected void onPause() {
 		super.onPause();
-		editor.commit();
 	}
 
 	@Override
@@ -121,20 +99,16 @@ public class Overplayed extends Activity {
 		}
 		setContentView(R.layout.main);
 
-		// Restore preferences
-		settings = getSharedPreferences(HOST_HIST_PREFS_NAME, 0);
-		editor = settings.edit();
-		String lastHost = settings.getString("lastHost", "");
+		String lastHost = Preferences.Load.hostname(this);
 		if (lastHost.length() > 0)
 			((EditText) findViewById(R.id.edit_message)).setText(lastHost);
 
-		String lastPort = settings.getString("lastPort", getResources()
-				.getString(R.string.port_default));
+		String lastPort = Preferences.Load.port(this);
 		((EditText) findViewById(R.id.edit_port)).setText(lastPort);
-		GameControllerView.alpha = settings.getFloat("alpha", .5f);
-		getStringArrayPref("boundButtons",boundButtons);
-		getStringArrayPref("boundAxis", boundAxis);
-
+		
+		Preferences.Load.boundButtons(this, boundButtons);
+		Preferences.Load.boundAxis(this, boundAxis);
+		
 		final EditText editText = (EditText) findViewById(R.id.edit_port);
 		editText.setOnEditorActionListener(new OnEditorActionListener() {
 			public boolean onEditorAction(TextView v, int actionId,
@@ -153,10 +127,8 @@ public class Overplayed extends Activity {
 	}
 
 	public void startController(View view) {
-
 		Intent i = new Intent(this, MainService.class);
-		i.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP
-				| Intent.FLAG_ACTIVITY_SINGLE_TOP);
+		i.setFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP);
 
 		String portString = ((EditText) findViewById(R.id.edit_port)).getText()
 				.toString();
@@ -169,8 +141,8 @@ public class Overplayed extends Activity {
 			if (addressString.length() > 0
 					&& new HostStringChecker().execute(addressString).get()) {
 
-				editor.putString("lastHost", addressString);
-				editor.putString("lastPort", portString);
+				Preferences.Save.hostname(this, addressString);
+				Preferences.Save.port(this, portString);
 				// Start
 				i.putExtra(MainService.EXTRA_ADDRESS, addressString);
 				startService(i);
@@ -179,7 +151,6 @@ public class Overplayed extends Activity {
 				Toast.makeText(this, "Invalid address", Toast.LENGTH_SHORT)
 						.show();
 		} catch (Exception e) {
-
 		}
 	}
 
@@ -187,43 +158,19 @@ public class Overplayed extends Activity {
 	public boolean onCreateOptionsMenu(Menu menu) {
 		super.onCreateOptionsMenu(menu);
 		MenuInflater inflater = getMenuInflater();
-		inflater.inflate(R.menu.menu, menu);
+		inflater.inflate(R.menu.configmenu, menu);
 		return true;
 	}
 
 	@Override
 	public boolean onMenuItemSelected(int featureId, MenuItem item) {
 		if (item.getItemId() == R.id.config) {
-			Intent i = new Intent(this, JoystickConfig.class);
+			Intent i = new Intent(this, KeyConfig.class);
 			this.startActivity(i);
 			return true;
 		}
 		return false;
 	}
 
-	public static void setStringArrayPref(Context context, String key,
-			ArrayList values) {
-		JSONArray a = new JSONArray(values);
-		if (values.size() > 0)
-			editor.putString(key, a.toString());
-		else
-			editor.putString(key, null);
-		editor.commit();
-	}
 
-	public static void getStringArrayPref(String key,
-			ArrayList<Integer> values) {
-		String json = settings.getString(key, null);
-		if (json != null) {
-			try {
-				JSONArray a = new JSONArray(json);
-				for (int i = 0; i < a.length(); i++) {
-					int value = a.optInt(i, values.get(i));
-					values.set(i,value);
-				}
-			} catch (Exception e) {
-				e.printStackTrace();
-			}
-		}
-	}
 }
